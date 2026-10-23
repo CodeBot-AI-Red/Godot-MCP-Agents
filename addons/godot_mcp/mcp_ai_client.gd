@@ -25,9 +25,15 @@ var _conversation_history: Array = []
 
 
 func _ready() -> void:
-	_http_request = HTTPRequest.new()
-	add_child(_http_request)
-	_http_request.request_completed.connect(_on_request_completed)
+	_ensure_http_request()
+
+
+func _ensure_http_request() -> void:
+	if not is_instance_valid(_http_request):
+		_http_request = HTTPRequest.new()
+		add_child(_http_request)
+		if not _http_request.request_completed.is_connected(_on_request_completed):
+			_http_request.request_completed.connect(_on_request_completed)
 
 
 func clear_history() -> void:
@@ -43,6 +49,11 @@ func send_message(user_message: String) -> void:
 
 
 func _dispatch_api_request() -> void:
+	_ensure_http_request()
+	if not is_instance_valid(_http_request):
+		emit_signal("error_occurred", "HTTPRequest node is missing.")
+		return
+
 	match provider:
 		Provider.OPENAI, Provider.CUSTOM:
 			_send_openai_style_request()
@@ -203,14 +214,18 @@ func _extract_reply_text(data: Dictionary) -> String:
 
 func _check_and_execute_tool_call(reply: String) -> void:
 	var start_idx := reply.find("```json")
+	var block_offset := 7
 	if start_idx == -1:
-		return
+		start_idx = reply.find("```")
+		block_offset = 3
+		if start_idx == -1:
+			return
 
-	var end_idx := reply.find("```", start_idx + 7)
+	var end_idx := reply.find("```", start_idx + block_offset)
 	if end_idx == -1:
 		return
 
-	var json_str := reply.substr(start_idx + 7, end_idx - (start_idx + 7)).strip_edges()
+	var json_str := reply.substr(start_idx + block_offset, end_idx - (start_idx + block_offset)).strip_edges()
 	var json := JSON.new()
 	if json.parse(json_str) == OK and json.get_data() is Dictionary:
 		var call_dict: Dictionary = json.get_data()

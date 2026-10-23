@@ -16,10 +16,21 @@ var _active_connections: Array = []
 
 
 func _ready() -> void:
-	_tcp_server = TCPServer.new()
+	_ensure_tcp_server()
+
+
+func _exit_tree() -> void:
+	stop_server()
+
+
+func _ensure_tcp_server() -> void:
+	if _tcp_server == null:
+		_tcp_server = TCPServer.new()
 
 
 func start_server(listen_port: int = 8080) -> bool:
+	_ensure_tcp_server()
+
 	if _is_running:
 		stop_server()
 
@@ -101,7 +112,12 @@ func _poll_connections() -> void:
 func _handle_request_data(conn: Dictionary) -> void:
 	var stream: StreamPeerTCP = conn["stream"]
 	var request_data: String = conn["buffer"]
-	var headers_and_body := request_data.split("\r\n\r\n", true, 1)
+
+	var separator := "\r\n\r\n"
+	if not (separator in request_data) and ("\n\n" in request_data):
+		separator = "\n\n"
+
+	var headers_and_body := request_data.split(separator, true, 1)
 
 	var headers_text := headers_and_body[0]
 	var body_text := headers_and_body[1] if headers_and_body.size() > 1 else ""
@@ -188,6 +204,9 @@ func _send_http_response(
 	body: String,
 	content_type: String
 ) -> void:
+	if not stream or stream.get_status() != StreamPeerTCP.STATUS_CONNECTED:
+		return
+
 	var response := "HTTP/1.1 " + str(status_code) + " " + status_msg + "\r\n"
 	response += "Content-Type: " + content_type + "\r\n"
 	response += "Content-Length: " + str(body.utf8().size()) + "\r\n"

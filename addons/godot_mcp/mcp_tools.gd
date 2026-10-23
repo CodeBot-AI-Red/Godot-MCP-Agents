@@ -149,13 +149,24 @@ static func execute_tool(tool_name: String, args: Dictionary) -> Dictionary:
 			}
 
 
+static func _normalize_path(path: String) -> String:
+	path = path.strip_edges()
+	if path.is_empty():
+		return "res://"
+	if not path.begins_with("res://") and not path.begins_with("user://") and not path.is_absolute_path():
+		path = "res://" + path
+	return path
+
+
 static func _op_read_file(path: String) -> Dictionary:
+	path = path.strip_edges()
 	if path.is_empty():
 		return {"success": false, "output": "Path parameter cannot be empty."}
 
-	var global_p := ProjectSettings.globalize_path(path)
+	var norm_p := _normalize_path(path)
+	var global_p := ProjectSettings.globalize_path(norm_p)
 	if not FileAccess.file_exists(global_p):
-		return {"success": false, "output": "File does not exist: " + path}
+		return {"success": false, "output": "File does not exist: " + norm_p}
 
 	var file := FileAccess.open(global_p, FileAccess.READ)
 	if not file:
@@ -168,10 +179,12 @@ static func _op_read_file(path: String) -> Dictionary:
 
 
 static func _op_write_file(path: String, content: String) -> Dictionary:
+	path = path.strip_edges()
 	if path.is_empty():
 		return {"success": false, "output": "Path parameter cannot be empty."}
 
-	var global_p := ProjectSettings.globalize_path(path)
+	var norm_p := _normalize_path(path)
+	var global_p := ProjectSettings.globalize_path(norm_p)
 	var dir_path := global_p.get_base_dir()
 
 	if not DirAccess.dir_exists_absolute(dir_path):
@@ -192,34 +205,38 @@ static func _op_write_file(path: String, content: String) -> Dictionary:
 
 	_notify_filesystem_scan()
 
-	return {"success": true, "output": "Successfully wrote file: " + path}
+	return {"success": true, "output": "Successfully wrote file: " + norm_p}
 
 
 static func _op_create_directory(path: String) -> Dictionary:
+	path = path.strip_edges()
 	if path.is_empty():
 		return {"success": false, "output": "Path parameter cannot be empty."}
 
-	var global_p := ProjectSettings.globalize_path(path)
+	var norm_p := _normalize_path(path)
+	var global_p := ProjectSettings.globalize_path(norm_p)
 	var err := DirAccess.make_dir_recursive_absolute(global_p)
 	if err != OK:
 		return {"success": false, "output": "Failed to create directory: " + str(err)}
 
 	_notify_filesystem_scan()
-	return {"success": true, "output": "Directory created successfully: " + path}
+	return {"success": true, "output": "Directory created successfully: " + norm_p}
 
 
 static func _op_delete_path(path: String) -> Dictionary:
+	path = path.strip_edges()
 	if path.is_empty():
 		return {"success": false, "output": "Path parameter cannot be empty."}
 
-	var global_p := ProjectSettings.globalize_path(path)
+	var norm_p := _normalize_path(path)
+	var global_p := ProjectSettings.globalize_path(norm_p)
 
 	if FileAccess.file_exists(global_p):
 		var err := DirAccess.remove_absolute(global_p)
 		if err != OK:
 			return {"success": false, "output": "Failed to delete file: " + str(err)}
 		_notify_filesystem_scan()
-		return {"success": true, "output": "Deleted file: " + path}
+		return {"success": true, "output": "Deleted file: " + norm_p}
 
 	if DirAccess.dir_exists_absolute(global_p):
 		var err := DirAccess.remove_absolute(global_p)
@@ -229,16 +246,17 @@ static func _op_delete_path(path: String) -> Dictionary:
 				"output": "Failed to remove directory (must be empty first): " + str(err)
 			}
 		_notify_filesystem_scan()
-		return {"success": true, "output": "Deleted directory: " + path}
+		return {"success": true, "output": "Deleted directory: " + norm_p}
 
-	return {"success": false, "output": "Target path does not exist: " + path}
+	return {"success": false, "output": "Target path does not exist: " + norm_p}
 
 
 static func _op_list_directory(path: String) -> Dictionary:
-	var global_p := ProjectSettings.globalize_path(path)
+	var norm_p := _normalize_path(path)
+	var global_p := ProjectSettings.globalize_path(norm_p)
 	var dir := DirAccess.open(global_p)
 	if not dir:
-		return {"success": false, "output": "Could not access directory: " + path}
+		return {"success": false, "output": "Could not access directory: " + norm_p}
 
 	var files: Array = []
 	var dirs: Array = []
@@ -246,7 +264,7 @@ static func _op_list_directory(path: String) -> Dictionary:
 	dir.list_dir_begin()
 	var item_name := dir.get_next()
 	while not item_name.is_empty():
-		if item_name != "." and item_name != "..":
+		if item_name != "." and item_name != ".." and item_name != ".godot" and item_name != ".git":
 			if dir.current_is_dir():
 				dirs.append(item_name + "/")
 			else:
@@ -255,7 +273,7 @@ static func _op_list_directory(path: String) -> Dictionary:
 	dir.list_dir_end()
 
 	var result := {
-		"path": path,
+		"path": norm_p,
 		"directories": dirs,
 		"files": files
 	}
@@ -267,7 +285,8 @@ static func _op_list_directory(path: String) -> Dictionary:
 
 
 static func _op_get_project_structure(root_path: String, max_depth: int) -> Dictionary:
-	var tree_dict := _scan_tree(root_path, 0, max_depth)
+	var norm_root := _normalize_path(root_path)
+	var tree_dict := _scan_tree(norm_root, 0, max_depth)
 	return {
 		"success": true,
 		"output": JSON.stringify(tree_dict, "  ")
@@ -295,7 +314,13 @@ static func _scan_tree(path: String, current_depth: int, max_depth: int) -> Dict
 	dir.list_dir_begin()
 	var item_name := dir.get_next()
 	while not item_name.is_empty():
-		if item_name != "." and item_name != ".." and not item_name.begins_with(".import"):
+		if (
+			item_name != "."
+			and item_name != ".."
+			and item_name != ".godot"
+			and item_name != ".git"
+			and not item_name.begins_with(".import")
+		):
 			var child_path := path.path_join(item_name)
 			if dir.current_is_dir():
 				var child_dir := _scan_tree(child_path, current_depth + 1, max_depth)
