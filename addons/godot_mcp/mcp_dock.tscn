@@ -1,0 +1,155 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8mcpdockscene"]
+
+[ext_resource type="Script" path="res://addons/godot_mcp/mcp_dock.gd" id="1_mcpdock"]
+
+[node name="MCP Dock" type="Control"]
+custom_minimum_size = Vector2(250, 400)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mcpdock")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="MainVBox" type="VBoxContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="HeaderLabel" type="Label" parent="ScrollContainer/MainVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Godot MCP AI Agent"
+horizontal_alignment = 1
+
+[node name="ServerTabContainer" type="TabContainer" parent="ScrollContainer/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Server Settings" type="VBoxContainer" parent="ScrollContainer/MainVBox/ServerTabContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ServerStateLabel" type="Label" parent="ScrollContainer/MainVBox/ServerTabContainer/Server Settings"]
+layout_mode = 2
+text = "MCP Server Status: Stopped"
+
+[node name="PortGrid" type="GridContainer" parent="ScrollContainer/MainVBox/ServerTabContainer/Server Settings"]
+layout_mode = 2
+columns = 2
+
+[node name="PortLabel" type="Label" parent="ScrollContainer/MainVBox/ServerTabContainer/Server Settings/PortGrid"]
+layout_mode = 2
+text = "Port:"
+
+[node name="PortSpin" type="SpinBox" parent="ScrollContainer/MainVBox/ServerTabContainer/Server Settings/PortGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 65535.0
+value = 8080.0
+
+[node name="AuthLabel" type="Label" parent="ScrollContainer/MainVBox/ServerTabContainer/Server Settings/PortGrid"]
+layout_mode = 2
+text = "Auth Token:"
+
+[node name="AuthEdit" type="LineEdit" parent="ScrollContainer/MainVBox/ServerTabContainer/Server Settings/PortGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Optional Auth Secret"
+
+[node name="ServerToggleBtn" type="Button" parent="ScrollContainer/MainVBox/ServerTabContainer/Server Settings"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Start MCP Server"
+
+[node name="LogTitle" type="Label" parent="ScrollContainer/MainVBox/ServerTabContainer/Server Settings"]
+layout_mode = 2
+text = "Server Logs:"
+
+[node name="LogText" type="TextEdit" parent="ScrollContainer/MainVBox/ServerTabContainer/Server Settings"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_vertical = 3
+editable = false
+wrap_mode = 1
+
+[node name="AI Assistant" type="VBoxContainer" parent="ScrollContainer/MainVBox/ServerTabContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ProviderGrid" type="GridContainer" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant"]
+layout_mode = 2
+columns = 2
+
+[node name="ProviderLabel" type="Label" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/ProviderGrid"]
+layout_mode = 2
+text = "Provider:"
+
+[node name="ProviderOption" type="OptionButton" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/ProviderGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ModelLabel" type="Label" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/ProviderGrid"]
+layout_mode = 2
+text = "Model Name:"
+
+[node name="ModelEdit" type="LineEdit" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/ProviderGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "gpt-4o-mini"
+
+[node name="APIKeyLabel" type="Label" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/ProviderGrid"]
+layout_mode = 2
+text = "API Key:"
+
+[node name="APIKeyEdit" type="LineEdit" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/ProviderGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+secret = true
+
+[node name="CustomURLLabel" type="Label" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/ProviderGrid"]
+layout_mode = 2
+text = "Custom / Ollama URL:"
+
+[node name="CustomURLEdit" type="LineEdit" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/ProviderGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "http://localhost:11434/v1/chat/completions"
+
+[node name="ChatText" type="TextEdit" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_vertical = 3
+editable = false
+wrap_mode = 1
+
+[node name="InputHBox" type="HBoxContainer" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant"]
+layout_mode = 2
+
+[node name="PromptEdit" type="LineEdit" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/InputHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Ask AI to create files, scripts, or directories..."
+
+[node name="SendBtn" type="Button" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/InputHBox"]
+custom_minimum_size = Vector2(70, 36)
+layout_mode = 2
+text = "Send"
+
+[node name="ClearBtn" type="Button" parent="ScrollContainer/MainVBox/ServerTabContainer/AI Assistant/InputHBox"]
+custom_minimum_size = Vector2(60, 36)
+layout_mode = 2
+text = "Clear"

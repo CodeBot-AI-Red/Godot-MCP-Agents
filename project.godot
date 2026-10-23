@@ -1,0 +1,20 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; but it can be edited manually as well.
+
+config_version=5
+
+[application]
+
+config/name="Godot MCP AI Agent Connection"
+config/description="Model Context Protocol (MCP) server & AI Assistant plugin for Godot Editor. Connect Claude, ChatGPT, Ollama and AI agents to manage files, scenes, and project structure."
+config/features=PackedStringArray("4.3", "Forward Plus")
+config/icon="res://icon.svg"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
