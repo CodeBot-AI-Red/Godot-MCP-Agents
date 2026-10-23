@@ -1,8 +1,5 @@
 import unittest
 import json
-import urllib.request
-import urllib.error
-import time
 import os
 import shutil
 
@@ -66,6 +63,40 @@ class TestGodotMCPProtocolAndTools(unittest.TestCase):
         # Delete
         os.remove(test_file)
         self.assertFalse(os.path.exists(test_file))
+
+    def test_path_normalization(self):
+        def normalize_path(path: str) -> str:
+            path = path.strip()
+            if not path:
+                return "res://"
+            if not path.startswith("res://") and not path.startswith("user://") and not os.path.isabs(path):
+                path = "res://" + path
+            return path
+
+        self.assertEqual(normalize_path("scripts/player.gd"), "res://scripts/player.gd")
+        self.assertEqual(normalize_path("res://scenes/main.tscn"), "res://scenes/main.tscn")
+        self.assertEqual(normalize_path(""), "res://")
+
+    def test_http_separator_parsing(self):
+        def parse_http_request(raw_data: str):
+            separator = "\r\n\r\n"
+            if separator not in raw_data and "\n\n" in raw_data:
+                separator = "\n\n"
+            parts = raw_data.split(separator, 1)
+            headers = parts[0]
+            body = parts[1] if len(parts) > 1 else ""
+            return headers, body
+
+        req_crlf = "POST / HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n{\"jsonrpc\":\"2.0\"}"
+        h1, b1 = parse_http_request(req_crlf)
+        self.assertIn("POST / HTTP/1.1", h1)
+        self.assertEqual(b1, "{\"jsonrpc\":\"2.0\"}")
+
+        req_lf = "POST / HTTP/1.1\nHost: 127.0.0.1\n\n{\"jsonrpc\":\"2.0\"}"
+        h2, b2 = parse_http_request(req_lf)
+        self.assertIn("POST / HTTP/1.1", h2)
+        self.assertEqual(b2, "{\"jsonrpc\":\"2.0\"}")
+
 
 if __name__ == "__main__":
     unittest.main()
